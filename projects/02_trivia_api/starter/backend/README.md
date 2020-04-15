@@ -45,6 +45,8 @@ To run the server, execute:
 ```bash
 export FLASK_APP=flaskr
 export FLASK_ENV=development
+export DB_USER="<your database username>"
+export DB_PASSWORD="<your database password>"
 flask run
 ```
 
@@ -52,49 +54,199 @@ Setting the `FLASK_ENV` variable to `development` will detect file changes and r
 
 Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` directory and the `__init__.py` file to find the application. 
 
-## Tasks
+## Testing 
 
-One note before you delve into your tasks: for each endpoint you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
+To running the test correctly, first you should drop the database and recreate it. To do so, you just have to execute the following sentences in a bash terminal from the backend folder: 
 
-1. Use Flask-CORS to enable cross-domain requests and set response headers. 
-2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
-3. Create an endpoint to handle GET requests for all available categories. 
-4. Create an endpoint to DELETE question using a question ID. 
-5. Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score. 
-6. Create a POST endpoint to get questions based on category. 
-7. Create a POST endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question. 
-8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
-9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
-
-REVIEW_COMMENT
+```bash
+dropdb trivia
+createdb trivia
+psql trivia<trivia.psql
+python test_flaskr.py
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+## API Reference
 
-Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+### Getting started
+- Base URL: At this moment this API only works in your local machine in the port 5000, so the base URL for our API is  http://127.0.0.1:5000 
+- Authentication : This version of the API doesn't require authentication
+
+### Endpoints
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
+- Sample URL : curl http://127.0.0.1:5000/categories
 - Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
+ 
+```json
 {'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
-
+ '2' : "Art",
+ '3' : "Geography",
+ '4' : "History",
+ '5' : "Entertainment",
+ '6' : "Sports"} 
 ```
 
+GET '/questions'
+- Fetches the full set of questions in our database
+- Required Arguments: None
+- Sample URL : curl http://127.0.0.1:5000/questions
+- Returns :
+    - a dictionary of categories, 
+    - current category
+    - the complete set of questions in our database
+    - the flag success (True if everything went right)
+    - total_questions : The number of questions availables in our database
+- Sample:
+```json
+{
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "current_category": "ALL",
+  "questions": [
+    {
+      "answer": "Apollo 13",
+      "category": 5,
+      "difficulty": 4,
+      "id": 2,
+      "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+    },
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    } ],
+  "success": true,
+  "total_questions": 2
+```
 
-## Testing
-To run the tests, run
+DELETE '/questions/<id_question>'
+- Delete a question from the database
+- Request Arguments: The id in the url of the question to delete
+- Sample URL : curl -X DELETE http://127.0.0.1:5000/questions 
+- Returns :
+    - the flag success (True if everything went right)
+    - id of the question deleted
+- Sample :
+```json
+  {
+      "success": true,
+      "deleted": 5
+  }
 ```
-dropdb trivia_test
-createdb trivia_test
-psql trivia_test < trivia.psql
-python test_flaskr.py
+
+POST '/questions'
+- Create a question in the database or search for a question in the database
+- Required Arguments: A question with the following format:
+```json
+    {
+        "question" : "What is the name of Son Goku\'s second son?",
+        "answer" : "Son Gotten",
+        "category" : 5,
+        "difficulty" : 3
+
+    }
 ```
+- Sample URL : curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/questions -d '{"question": "question text", "answer": "answer", "difficulty": "1", "category": "1"}'
+- Returns :
+    - the flag success (True if everything went right)
+    - id of the question created
+- Sample : 
+```json
+  {
+      "success": true,
+      "id_question": 5
+  }
+```
+GET '/categories/<id_category>/questions'
+- Gets a set of questions by category
+- Required Arguments : The id of the category used to filter by in the url of the request
+- Sample URL:  curl http://127.0.0.1:5000/categories/3/questions
+- Returns :
+    - a dictionary of categories, 
+    - current category
+    - the questions from the category 
+    - the flag success (True if everything went right)
+    - total_questions : The number of questions availables in our database 
+- Sample : 
+```json
+{
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "current_category": "Geography",
+  "questions": [
+    {
+      "answer": "Lake Victoria",
+      "category": 3,
+      "difficulty": 2,
+      "id": 13,
+      "question": "What is the largest lake in Africa?"
+    },
+    {
+      "answer": "The Palace of Versailles",
+      "category": 3,
+      "difficulty": 3,
+      "id": 14,
+      "question": "In which royal palace would you find the Hall of Mirrors?"
+    },
+    {
+      "answer": "Agra",
+      "category": 3,
+      "difficulty": 2,
+      "id": 15,
+      "question": "The Taj Mahal is located in which Indian city?"
+    }
+  ],
+  "success": true,
+  "total_questions": 3
+}
+```
+POST '/quizzes'
+- Return a question from the category selected 
+- Sample: curl -X POST -H "Content-Type: application/json" http://127.0.0.1:5000/quizzes -d '{"previous_questions": [],"quiz_category": {"type": "category type", "id": "3"}}'
+- Required arguments : a json object with the following format : 
+```json
+{
+    "previous_questions": [9],
+    "quiz_category": {
+        "type":"Entertainment",
+         "id": "5" 
+    }
+}
+```
+- Returns 
+    - the flag success (True if everything went right)
+    - A random question from the database for the category selected
+- Sample
+
+```json
+{
+  "question": {
+    "answer": "The Palace of Versailles",
+    "category": 3,
+    "difficulty": 3,
+    "id": 14,
+    "question": "In which royal palace would you find the Hall of Mirrors?"
+  },
+  "success": true
+}
+```
+## Authors
+José Manuel Díaz Bossini
+## Acknowledgements
+To Caryn for her teachings and to the udacity team for this great nanodegree
+
